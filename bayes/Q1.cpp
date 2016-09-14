@@ -94,16 +94,125 @@ public:
       for(int j : edges[i]) rev_edges[j].push_back(i); 
     }
   }
+
+  bool observed_desc(int i, vector<int>& visited,
+                     const vector<int> observed,
+                     vector<int>& obs_desc) {
+    visited[i] = 1;
+    bool res = false;
+    if(observed[i]) res = true;
+    for(int j : edges[i]) {
+      if(visited[j]) continue;
+      res |= observed_desc(j, visited, observed, obs_desc);
+    }
+    obs_desc[i] = res;
+    return res;
+  }
+
+  bool active_trail(int v, int p, int dest, vector<int> &visited,
+                    const vector<int>& od, const vector<int> observed,
+                    vector<int>& trail) {
+    trail.push_back(v);
+    if (v == dest) return true;
+    bool fwd = false, rev = false;
+    if(p == -1) {
+      // this is the source vertex.
+      visited[v] = 3;
+      fwd = rev = true;
+    }
+    else {
+      visited[v] += p;
+    }
+    if(p == 1) {
+      if(!observed[v]){
+        fwd = true;
+      }
+      if(od[v]) {
+        rev = true;
+      }
+    }
+    else if (p==2 && !observed[v]) {
+        fwd = rev = true;
+    }
+    if(fwd) {
+      for(int i = 0; i < edges[v].size(); i++) {
+        int j = edges[v][i];
+        if(visited[j] == 1 || visited[j] == 3) continue;
+        if(active_trail(j,1,dest,visited,od,observed,trail)) return true;
+      }
+    }
+    if(rev) {
+      for(int i = 0; i < rev_edges[v].size(); i++) {
+        int j = rev_edges[v][i];
+        if(visited[j] == 2 || visited[j] == 3) continue;
+        if(active_trail(j,2,dest,visited,od,observed,trail)) return true;
+      }
+    }
+    trail.pop_back();
+    return false;
+  }
+  vector<int> ActiveTrail(int u, int v, const vector<int>& obs) {
+    vector<int> observed(n, 0);
+    for(int v : obs) observed[v] = 1;
+    if(observed[u] || observed[v]) return {};
+    vector<int> od(n,0);
+    vector<int> visited(n, 0);
+    for(int i = 0; i < n; i++) {
+      if(visited[i]) continue;
+      observed_desc(i, visited, observed, od);
+    }
+    vector<int> res;
+    fill(visited.begin(), visited.end(), 0);
+    if(active_trail(u,-1,v,visited,od,observed,res)) {
+      return res;
+    }
+    else {
+      assert(res.size() == 0);
+      return {};
+    }
+  }
 };
 
+void query(BNet& net, const string& input, const string& output) {
+  ifstream fin(input, ifstream::in);
+  ofstream fout(output, ofstream::out);
+  string q;
+  while(getline(fin,q)) {
+    stringstream ss(q);
+    int u,v;
+    ss >> u >> v;
+    u--; v--;
+    cout << "Solving query :" << q << endl;
+    cout << "source : " << u << "dest: " << v << endl;
+    string list;
+    ss >> list;
+    vector<int> observed;
+    ParseList(list, &observed);
+    cout << "Observed: ";
+    for(int i : observed) cout << i <<" ";
+    cout << endl;
+    vector<int> trail = net.ActiveTrail(u,v,observed);
+    fout << q << endl;
+    if(trail.size()) {
+      fout << "no [";
+      for(int i = 0; i < trail.size(); i++){
+        if(i > 0) fout << ",";
+        fout << trail[i]+1;
+      }
+      fout << "]" << endl;
+    }
+    else fout << "yes" << endl;
+  }
+}
 int main() {
   // srand(time(NULL));
   string filename;
   // cin >> filename;
   BNet net;
-  //net.LoadFrom("sample-bn.txt");
-  net.GenerateRandom(5, 1);
+  net.LoadFrom("sample-bn.txt");
+  //net.GenerateRandom(5, 1);
   net.Print();
-  net.Dump("sample-dump.txt");
+  query(net, "sample-query.txt", "out.txt");
+  //net.Dump("sample-dump.txt");
   return 0;
 }
