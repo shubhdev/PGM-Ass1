@@ -103,16 +103,17 @@ public:
     if(observed[i]) res = true;
     for(int j : edges[i]) {
       if(visited[j]) continue;
-      res |= observed_desc(j, visited, observed, obs_desc);
+      res |= observed_desc(j,visited,observed,obs_desc);
     }
     obs_desc[i] = res;
     return res;
   }
 
-  bool active_trail(int v, int p, int dest, vector<int> &visited,
-                    const vector<int>& od, const vector<int> observed,
-                    vector<int>& trail) {
+  bool active_trail(int v, int p, int dest,vector<int>& active,
+                    vector<int> &visited, const vector<int>& od,
+                    const vector<int> observed, vector<int>& trail) {
     trail.push_back(v);
+    active[v] = 1;
     if (v == dest) return true;
     bool fwd = false, rev = false;
     if(p == -1) {
@@ -137,17 +138,18 @@ public:
     if(fwd) {
       for(int i = 0; i < edges[v].size(); i++) {
         int j = edges[v][i];
-        if(visited[j] == 1 || visited[j] == 3) continue;
-        if(active_trail(j,1,dest,visited,od,observed,trail)) return true;
+        if(visited[j] == 1 || visited[j] == 3 || active[j]) continue;
+        if(active_trail(j,1,dest,active,visited,od,observed,trail)) return true;
       }
     }
     if(rev) {
       for(int i = 0; i < rev_edges[v].size(); i++) {
         int j = rev_edges[v][i];
-        if(visited[j] == 2 || visited[j] == 3) continue;
-        if(active_trail(j,2,dest,visited,od,observed,trail)) return true;
+        if(visited[j] == 2 || visited[j] == 3 || active[j]) continue;
+        if(active_trail(j,2,dest,active,visited,od,observed,trail)) return true;
       }
     }
+    active[v] = 0;
     trail.pop_back();
     return false;
   }
@@ -161,9 +163,11 @@ public:
       if(visited[i]) continue;
       observed_desc(i, visited, observed, od);
     }
+    cout<<"~~~~"<<od[2]<<endl;
     vector<int> res;
     fill(visited.begin(), visited.end(), 0);
-    if(active_trail(u,-1,v,visited,od,observed,res)) {
+    vector<int> active(n,0);
+    if(active_trail(u,-1,v,active,visited,od,observed,res)) {
       return res;
     }
     else {
