@@ -61,14 +61,14 @@ class Model {
     assert(n == char_values.size());
     Score score;
     for(int i = 0; i < n; i++) {
-      score.ocr += log(ocr[img_values[i]][char_values[i]]);
+      score.ocr += log2(ocr[img_values[i]][char_values[i]]);
       if(i > 0) {
-        score.trans += log(trans[char_values[i]][char_values[i-1]]);
+        score.trans += log2(trans[char_values[i-1]][char_values[i]]);
       }
       for(int j = i+1; j < n; j++) {
         if(img_values[i] != img_values[j]) continue;
-        if(char_values[j] == char_values[i]) score.combined += log(skip_factor1);
-        else score.combined += log(skip_factor2);
+        if(char_values[j] == char_values[i]) score.combined += log2(skip_factor1);
+        else score.combined += log2(skip_factor2);
       }
     }
     score.trans += score.ocr;
@@ -109,9 +109,9 @@ class Model {
         // cout << w << " " << max_combined << endl;
         m_combined = w;
       }
-      total.ocr += exp(score.ocr);
-      total.trans += exp(score.trans);
-      total.combined += exp(score.combined);
+      total.ocr += pow(2,score.ocr);
+      total.trans += pow(2,score.trans);
+      total.combined += pow(2,score.combined);
     }
     total.ocr /= m;
     total.trans /= m;
@@ -158,7 +158,7 @@ class Model {
           fout << chars[word%10];
           word /= 10;
         }
-        fout << " ";
+        if(i!=2) fout << " ";
       }
       fout << endl;
     }
