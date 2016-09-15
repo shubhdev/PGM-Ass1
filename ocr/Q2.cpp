@@ -61,21 +61,21 @@ class Model {
     assert(n == char_values.size());
     Score score;
     for(int i = 0; i < n; i++) {
-      score.ocr += log(ocr[img_values[i]][char_values[i]]);
+      score.ocr += log2(ocr[img_values[i]][char_values[i]]);
       if(i > 0) {
-        score.trans += log(trans[char_values[i]][char_values[i-1]]);
+        score.trans += log2(trans[char_values[i]][char_values[i-1]]);
       }
       for(int j = i+1; j < n; j++) {
         if(img_values[i] != img_values[j]) continue;
-        if(char_values[j] == char_values[i]) score.combined += log(skip_factor1);
-        else score.combined += log(skip_factor2);
+        if(char_values[j] == char_values[i]) score.combined += log2(skip_factor1);
+        else score.combined += log2(skip_factor2);
       }
     }
     score.trans += score.ocr;
     score.combined += score.trans;
-    // score.ocr = pow(2, score.ocr);
-    // score.trans = pow(2, score.trans);
-    // score.combined = pow(2, score.combined);
+    score.ocr = pow(2, score.ocr);
+    score.trans = pow(2, score.trans);
+    score.combined = pow(2, score.combined);
     return score;    
   }
   // does everything.
@@ -83,7 +83,7 @@ class Model {
     int n = img.size();
     int m = ten[n];
     Score total;
-    double max_ocr = -1e15, max_trans = -1e15, max_combined = -1e15;
+    double max_ocr = -1, max_trans = -1, max_combined = -1;
     int m_ocr,m_trans,m_combined;
     vector<int> chr(n);
     // generate all numbers from 0, 10^n - 1;
@@ -109,9 +109,12 @@ class Model {
         // cout << w << " " << max_combined << endl;
         m_combined = w;
       }
-      total.ocr += exp(score.ocr);
-      total.trans += exp(score.trans);
-      total.combined += exp(score.combined);
+      total.ocr += score.ocr;
+      total.trans += score.trans;
+      total.combined += score.combined;
+      // total.ocr += pow(2,score.ocr);
+      // total.trans += pow(2,score.trans);
+      // total.combined += pow(2,score.combined);
     }
     total.ocr /= m;
     total.trans /= m;
@@ -132,9 +135,12 @@ class Model {
     }
     Score score = getUnNormalized(img,chr);
     Score z = getZ(img,NULL);
-    score.ocr = pow(2,score.ocr)/z.ocr;
-    score.trans = pow(2,score.trans)/z.trans;
-    score.combined = pow(2,score.combined)/z.trans;
+    score.ocr = score.ocr/z.ocr;  
+    score.trans = score.trans/z.trans;
+    score.combined = score.combined/z.trans;
+    // score.ocr = pow(2,score.ocr)/z.ocr;
+    // score.trans = pow(2,score.trans)/z.trans;
+    // score.combined = pow(2,score.combined)/z.trans;
     return score;
   } 
   void getPrediction(const string& img_data) {
