@@ -73,9 +73,9 @@ class Model {
     }
     score.trans += score.ocr;
     score.combined += score.trans;
-    // score.ocr = pow(2, score.ocr);
-    // score.trans = pow(2, score.trans);
-    // score.combined = pow(2, score.combined);
+    score.ocr = pow(2, score.ocr);
+    score.trans = pow(2, score.trans);
+    score.combined = pow(2, score.combined);
     return score;    
   }
   // does everything.
@@ -83,7 +83,7 @@ class Model {
     int n = img.size();
     int m = ten[n];
     Score total;
-    double max_ocr = -1e15, max_trans = -1e15, max_combined = -1e15;
+    double max_ocr = -1, max_trans = -1, max_combined = -1;
     int m_ocr,m_trans,m_combined;
     vector<int> chr(n);
     // generate all numbers from 0, 10^n - 1;
@@ -112,6 +112,9 @@ class Model {
       total.ocr += pow(2,score.ocr);
       total.trans += pow(2,score.trans);
       total.combined += pow(2,score.combined);
+      // total.ocr += score.ocr;
+      // total.trans += score.trans;
+      // total.combined += score.combined;
     }
     total.ocr /= m;
     total.trans /= m;
@@ -132,9 +135,12 @@ class Model {
     }
     Score score = getUnNormalized(img,chr);
     Score z = getZ(img,NULL);
-    score.ocr = pow(2,score.ocr)/z.ocr;
-    score.trans = pow(2,score.trans)/z.trans;
-    score.combined = pow(2,score.combined)/z.trans;
+    score.ocr = score.ocr/z.ocr;  
+    score.trans = score.trans/z.trans;
+    score.combined = score.combined/z.trans;
+    // score.ocr = pow(2,score.ocr)/z.ocr;
+    // score.trans = pow(2,score.trans)/z.trans;
+    // score.combined = pow(2,score.combined)/z.trans;
     return score;
   } 
   void getPrediction(const string& img_data) {
